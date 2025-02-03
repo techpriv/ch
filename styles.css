@@ -72,6 +72,7 @@ body{
 #fullName{ 
 	font-size: 0.8rem; 
 	opacity: 0.3; 
+	user-select: none;
 }
 
 .messages{ 
