@@ -57,6 +57,8 @@
     </div>
 
     <script>
+        document.addEventListener("DOMContentLoaded", loadMessages);
+
         function sendMessage() {
             const input = document.getElementById("messageInput");
             const message = input.value.trim();
@@ -66,8 +68,26 @@
                 messageElement.textContent = message;
                 messagesContainer.appendChild(messageElement);
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                saveMessage(message);
                 input.value = "";
             }
+        }
+
+        function saveMessage(message) {
+            let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
+            messages.push(message);
+            localStorage.setItem("chatMessages", JSON.stringify(messages));
+        }
+
+        function loadMessages() {
+            let messages = JSON.parse(localStorage.getItem("chatMessages")) || [];
+            const messagesContainer = document.getElementById("messages");
+            messages.forEach(msg => {
+                const messageElement = document.createElement("div");
+                messageElement.textContent = msg;
+                messagesContainer.appendChild(messageElement);
+            });
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
     </script>
 </body>
