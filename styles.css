@@ -23,7 +23,7 @@ body{
 	justify-content: center; 
 } 
  
-container h1{ 
+.container h1{ 
  
 	text-transform: uppercase; 
 	color: #ccc; 
