@@ -1,25 +1,23 @@
+let chatBox = document.getElementById('chat-box');
+let messageInput = document.getElementById('message');
+
 function sendMessage() {
-    const userMessage = document.getElementById('userInput').value;
-    const messagesContainer = document.getElementById('messages');
-
-    if (userMessage.trim()) {
-        // Display user's message
-        const userMessageElement = document.createElement('div');
-        userMessageElement.classList.add('user-message');
-        userMessageElement.textContent = userMessage;
-        messagesContainer.appendChild(userMessageElement);
-
-        // Clear the input field
-        document.getElementById('userInput').value = '';
-
-        // Simulate response generation by fetching updated response from GitHub (GitHub Actions triggered the update)
-        fetch('response.txt')
-            .then(response => response.text())
-            .then(data => {
-                const botMessageElement = document.createElement('div');
-                botMessageElement.classList.add('bot-message');
-                botMessageElement.textContent = data;
-                messagesContainer.appendChild(botMessageElement);
-            });
-    }
+  const message = messageInput.value.trim();
+  if (message) {
+    let messageElement = document.createElement('div');
+    messageElement.textContent = message;
+    chatBox.appendChild(messageElement);
+    messageInput.value = '';
+    
+    // Auto-scroll to the latest message
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
 }
+
+// Simulate a message every 3 seconds (you would replace this with real-time functionality)
+setInterval(() => {
+  let messageElement = document.createElement('div');
+  messageElement.textContent = "Simulated message at " + new Date().toLocaleTimeString();
+  chatBox.appendChild(messageElement);
+  chatBox.scrollTop = chatBox.scrollHeight;
+}, 3000);
