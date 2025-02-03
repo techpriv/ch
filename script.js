@@ -11,7 +11,7 @@ document.getElementById('startChat').addEventListener('click', () => {
 
 	if (username) ( 
 		setCookie('username', username, 7); // Set cookie for 7 days 
-		window.location.href/livechat.html"; 
+		window.location.href/chat.html"; 
 	}else{ 
 		alert('Please enter a username');
 	}
