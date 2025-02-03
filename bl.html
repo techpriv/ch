@@ -1,94 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <style>
-        * {
+        body{
+            margin:0;
+            padding:0;
+            background:#000;
+        }
+        #messages{
+            position: fixed;
+            left:0;
+            top:0;
+            width:100%;
+            height:calc( 100% - 50px );
+            background:#000;
+            overflow-y:auto;
+            padding:10px;
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow-x: hidden;
-            background: #000;
-            font-family: Arial, sans-serif;
-        }
-        #messages {
+        #sendMsg{
             position: fixed;
-            left: 0;
-            top: 0;
+            left:0;
+            bottom:0;
             width: 100%;
-            height: calc(100% - 60px);
-            overflow-y: auto;
-            padding: 10px;
-            background: #000;
-            display: flex;
-            flex-direction: column;
+            height:50px;
+            background:#AAA;
         }
-        #sendMsg {
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 100%;
-            height: 60px;
-            background: #AAA;
-            display: flex;
-            align-items: center;
-            padding: 5px;
+        #msgTxt{
+            position: absolute;
+            left:0;
+            top:0;
+            width:calc(100% - 100px);
+            height:100%;
+            padding-left:10px;
+            box-sizing: border-box;
         }
-        #msgTxt {
-            flex: 1;
-            height: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: none;
-            outline: none;
-        }
-        #msgBtn {
+        #msgBtn{
+            position: absolute;
+            right:0;
+            top:0;
             width: 100px;
-            height: 100%;
-            font-size: 16px;
-            border: none;
-            cursor: pointer;
+            height:100%;
         }
-        .outer {
-            width: 100%;
-            margin-top: 10px;
-            display: flex;
+        .outer{
+            width:100%;
+            margin-top:10px;
+            display:flex;
         }
-        #inner {
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 80%;
-            word-wrap: break-word;
+        #inner{
+            padding:10px;
+            box-sizing: border-box;
+            border-radius:10px;
         }
-        .me {
-            background: #8800FF;
-            color: #fff;
-            align-self: flex-end;
+        .me{
+            background:#8800FF;
+            color:#fff;
+            justify-content:end;
         }
-        .notMe {
-            background: #FFF;
-            color: #000;
-            align-self: flex-start;
+        .notMe{
+            background:#FFF;
+            color:#000;
         }
     </style>
 </head>
-<body>
-    <div id="messages"></div>
-    <div id="sendMsg">
-        <input type="text" id="msgTxt" placeholder="ENTER YOUR MSG...">
-        <input type="submit" id="msgBtn" value="send" onclick="module.sendMsg()">
-    </div>
 
-    <script>
-        module = {};
-    </script>
+<body>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+        import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved, get } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
@@ -102,40 +82,71 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        var msgTxt = document.getElementById('msgTxt');
-        var sender = sessionStorage.getItem('sender') || prompt('PLEASE ENTER YOUR NAME');
-        sessionStorage.setItem('sender', sender);
+        async function checkPassword() {
+            const passRef = ref(db, "password");
+            const snapshot = await get(passRef);
+            if (snapshot.exists()) {
+                const storedPassword = snapshot.val();
+                let userPass = prompt("ENTER PASSWORD TO ACCESS CHAT");
+                if(userPass !== storedPassword){
+                    alert("Incorrect password!");
+                    window.location.href = "about:blank";
+                }
+            } else {
+                alert("No password set in database!");
+            }
+        }
+        checkPassword();
+    </script>
+    
+    <div id="messages"></div>
 
-        module.sendMsg = function sendMsg() {
+    <div id="sendMsg">
+        <input type="text" id="msgTxt" placeholder="ENTER YOUR MSG...">
+        <input type="submit" id="msgBtn" value="send" onclick="module.sendMsg()">
+    </div>
+
+    <script>
+        module = {};
+    </script>
+    <script type="module">
+        var msgTxt = document.getElementById('msgTxt');
+        var sender;
+        if(sessionStorage.getItem('sender')){
+            sender = sessionStorage.getItem('sender');
+        } else {
+            sender = prompt('PLEASE ENTER YOUR NAME');
+            sessionStorage.setItem('sender',sender);
+        }
+
+        module.sendMsg = function sendMsg(){
             var msg = msgTxt.value;
             var timestamp = new Date().getTime();
-            set(ref(db, "messages/" + timestamp), {
-                msg: msg,
-                sender: sender
-            });
-            msgTxt.value = "";
-        };
+            set(ref(db,"messages/"+timestamp),{
+                msg : msg,
+                sender : sender
+            })
 
-        onChildAdded(ref(db, "messages"), (data) => {
-            let isMe = data.val().sender === sender;
-            let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
-                                <div id="inner" class="${isMe ? 'me' : 'notMe'}">
-                                    ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
-                                    ${isMe ? `<button onclick="module.dltMsg(${data.key})">DELETE</button>` : ""}
-                                </div>
-                              </div>`;
-            messages.innerHTML += msgElement;
-            messages.scrollTop = messages.scrollHeight; // Auto-scroll to latest message
-        });
+            msgTxt.value="";
+        }
 
-        module.dltMsg = function dltMsg(key) {
-            remove(ref(db, "messages/" + key));
-        };
+        onChildAdded(ref(db,"messages"), (data)=>{
+            if(data.val().sender == sender){
+                messages.innerHTML += "<div style='justify-content:end' class='outer' id='"+data.key+"'><div id='inner' class='me'>you : "+data.val().msg+"<button id='dltMsg' onclick='module.dltMsg(\""+data.key+"\")'>DELETE</button></div></div>";
+            } else {
+                messages.innerHTML += "<div class='outer' id='"+data.key+"'><div id='inner' class='notMe'>"+data.val().sender+" : "+data.val().msg+"</div></div>";
+            }
+        })
 
-        onChildRemoved(ref(db, "messages"), (data) => {
+        module.dltMsg = function dltMsg(key){
+            remove(ref(db,"messages/"+key));
+        }
+
+        onChildRemoved(ref(db,"messages"),(data)=>{
             var msgBox = document.getElementById(data.key);
-            if (msgBox) messages.removeChild(msgBox);
-        });
+            messages.removeChild(msgBox);
+        })
     </script>
 </body>
+
 </html>
