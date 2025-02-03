@@ -23,6 +23,7 @@ function loadMessages() {
     const chatBox = document.getElementById("chat-box");
     chatBox.innerHTML = ""; // Clear the chat box
 
+    // Fetch all messages from the database
     db.ref("messages").once("value", (snapshot) => {
         snapshot.forEach((childSnapshot) => {
             const msg = childSnapshot.val();
@@ -39,16 +40,24 @@ function loadMessages() {
 
 // Function to send a message
 function sendMessage() {
-    const username = document.getElementById("username").value;
-    const message = document.getElementById("message").value;
-    if (username.trim() === "" || message.trim() === "") return;
+    const username = document.getElementById("username").value.trim();
+    const message = document.getElementById("message").value.trim();
 
+    if (username === "" || message === "") {
+        alert("Please enter both your name and a message.");
+        return;
+    }
+
+    // Push message to Firebase Realtime Database
     db.ref("messages").push({
         user: username,
         text: message
+    }).then(() => {
+        document.getElementById("message").value = ""; // Clear the message input after sending
+    }).catch((error) => {
+        console.error("Error sending message:", error);
+        alert("Failed to send message. Please try again.");
     });
-
-    document.getElementById("message").value = "";
 }
 
 // Function to add a message to chat UI
