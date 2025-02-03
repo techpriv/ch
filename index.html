@@ -4,7 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Real-time Chatbox</title>
-  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Add the CSS from before */
+  </style>
 </head>
 <body>
   <div class="chat-container">
@@ -13,6 +15,50 @@
     <button onclick="sendMessage()">Send</button>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+
+  <script>
+    // Firebase Configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyAnkVPt9P_jWQDLylcRWONtgWQD14c0kY4",
+        authDomain: "techpriv-932ca.firebaseapp.com",
+        databaseURL: "https://techpriv-932ca-default-rtdb.firebaseio.com",
+        projectId: "techpriv-932ca",
+        storageBucket: "techpriv-932ca.firebasestorage.app",
+        messagingSenderId: "643143598765",
+        appId: "1:643143598765:web:1df355c2d63d8fc663fc24",
+        measurementId: "G-R922M886S7"
+      };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let messageInput = document.getElementById('message');
+    let chatBox = document.getElementById('chat-box');
+
+    function sendMessage() {
+      const message = messageInput.value.trim();
+      if (message) {
+        const newMessageRef = db.ref('messages').push();
+        newMessageRef.set({ message: message });
+
+        // Clear the input field after sending the message
+        messageInput.value = '';
+      }
+    }
+
+    // Listen for new messages in real-time
+    db.ref('messages').on('child_added', function(snapshot) {
+      const message = snapshot.val().message;
+      let messageElement = document.createElement('div');
+      messageElement.textContent = message;
+      chatBox.appendChild(messageElement);
+
+      // Scroll to the latest message
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+  </script>
 </body>
 </html>
