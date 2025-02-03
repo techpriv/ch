@@ -39,6 +39,7 @@ function loadMessages() {
 }
 
 // Function to send a message
+
 function sendMessage() {
     const username = document.getElementById("username").value.trim();
     const message = document.getElementById("message").value.trim();
@@ -48,14 +49,17 @@ function sendMessage() {
         return;
     }
 
+    console.log("Sending message:", username, message);  // Debugging line
+
     // Push message to Firebase Realtime Database
     db.ref("messages").push({
         user: username,
         text: message
     }).then(() => {
+        console.log("Message sent successfully!");  // Debugging line
         document.getElementById("message").value = ""; // Clear the message input after sending
     }).catch((error) => {
-        console.error("Error sending message:", error);
+        console.error("Error sending message:", error);  // Debugging line
         alert("Failed to send message. Please try again.");
     });
 }
