@@ -67,6 +67,7 @@ body{
 	align-items: start; 
 	justify-content: start; 
 	gap: 8.4rem;
+	user-select: none;
 }
 
 #fullName{ 
