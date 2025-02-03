@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Video Chat</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; }
+        video { width: 45%; border: 2px solid black; margin: 5px; }
+        button { padding: 10px; margin: 5px; }
+    </style>
+</head>
+<body>
+
+    <h2>WebRTC Video Chat</h2>
+    
+    <video id="localVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+
+    <br>
+    <button id="startCall">Start Call</button>
+    <button id="answerCall">Answer Call</button>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
+          authDomain: "chatapp-83001.firebaseapp.com",
+          projectId: "chatapp-83001",
+          storageBucket: "chatapp-83001.firebasestorage.app",
+          messagingSenderId: "988283174951",
+          appId: "1:988283174951:web:f4dba87388716ed17a4e02",
+        };
+
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        const servers = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        let pc = new RTCPeerConnection(servers);
+
+        let localStream;
+        let remoteStream = new MediaStream();
+        
+        const localVideo = document.getElementById("localVideo");
+        const remoteVideo = document.getElementById("remoteVideo");
+
+        // Access user camera and microphone
+        async function startMedia() {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            localVideo.srcObject = localStream;
+        }
+        
+        startMedia();
+
+        // When remote stream is received
+        pc.ontrack = event => {
+            remoteStream.addTrack(event.track);
+            remoteVideo.srcObject = remoteStream;
+        };
+
+        // Firebase signaling references
+        const callRef = ref(db, "call");
+        const answerRef = ref(db, "answer");
+        const iceRef = ref(db, "ice");
+
+        // Start call (send offer)
+        document.getElementById("startCall").addEventListener("click", async () => {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            set(callRef, { type: offer.type, sdp: offer.sdp });
+        });
+
+        // Listen for an offer
+        onValue(callRef, async snapshot => {
+            if (snapshot.exists() && !pc.currentRemoteDescription) {
+                const data = snapshot.val();
+                pc.setRemoteDescription(new RTCSessionDescription(data));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                set(answerRef, { type: answer.type, sdp: answer.sdp });
+            }
+        });
+
+        // Listen for an answer
+        onValue(answerRef, snapshot => {
+            if (snapshot.exists() && !pc.currentRemoteDescription) {
+                pc.setRemoteDescription(new RTCSessionDescription(snapshot.val()));
+            }
+        });
+
+        // Answer call
+        document.getElementById("answerCall").addEventListener("click", () => {
+            onValue(answerRef, snapshot => {
+                if (snapshot.exists()) {
+                    pc.setRemoteDescription(new RTCSessionDescription(snapshot.val()));
+                }
+            });
+        });
+
+        // ICE Candidate exchange
+        pc.onicecandidate = event => {
+            if (event.candidate) {
+                set(iceRef, { candidate: event.candidate });
+            }
+        };
+
+        onValue(iceRef, snapshot => {
+            if (snapshot.exists()) {
+                pc.addIceCandidate(new RTCIceCandidate(snapshot.val().candidate));
+            }
+        });
+    </script>
+
+</body>
+</html>
