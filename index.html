@@ -58,12 +58,6 @@
             margin-top: 10px;
             display: flex;
         }
-        #inner {
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
         .me {
             background: #8800FF;
             color: #fff;
@@ -153,7 +147,7 @@
             let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
                                 <div id="inner" class="${isMe ? 'me' : 'notMe'}">
                                     ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
-                                    ${isMe ? `<button onclick="module.dltMsg(${data.key})">DELETE</button>` : ""}
+                                    ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">D</button>` : ""}
                                 </div>
                               </div>`;
             messages.innerHTML += msgElement;
