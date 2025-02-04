@@ -144,7 +144,7 @@
             let isMe = data.val().sender === sender;
             let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
                                 <div id="inner" class="${isMe ? 'me' : 'notMe'}">
-                                    ${isMe ? data.val().sender} : ${data.val().msg :'You'}
+                                    ${isMe ? data.val().sender} : ${data.val().msg}
                                     ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">🗑️</button>` : ""}
                                 </div>
                               </div>`;
