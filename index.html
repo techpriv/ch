@@ -79,33 +79,47 @@
 <body>
     <div id="messages"></div>
     <div id="sendMsg">
-        <input type="text" id="msgTxt" placeholder="ENTER YOUR MSG...">
+        <input type="text" id="msgTxt" placeholder="Write ...">
         <input type="submit" id="msgBtn" value="send" onclick="module.sendMsg()">
     </div>
 
     <script>
         module = {};
     </script>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-        import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getDatabase, ref, set, get, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-        const firebaseConfig = {
-          apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
-          authDomain: "chatapp-83001.firebaseapp.com",
-          projectId: "chatapp-83001",
-          storageBucket: "chatapp-83001.firebasestorage.app",
-          messagingSenderId: "988283174951",
-          appId: "1:988283174951:web:f4dba87388716ed17a4e02",
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
+        authDomain: "chatapp-83001.firebaseapp.com",
+        projectId: "chatapp-83001",
+        storageBucket: "chatapp-83001.firebasestorage.app",
+        messagingSenderId: "988283174951",
+        appId: "1:988283174951:web:f4dba87388716ed17a4e02",
+    };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        var msgTxt = document.getElementById('msgTxt');
-        var sender = sessionStorage.getItem('sender') || prompt('PLEASE ENTER YOUR NAME');
-        sessionStorage.setItem('sender', sender);
+    let sender = sessionStorage.getItem('sender') || prompt('PLEASE ENTER YOUR NAME');
 
+    function checkUserAccess(username) {
+        const usersRef = ref(db, "allowedUsers/" + username);
+        get(usersRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                sessionStorage.setItem('sender', username);
+                startChat();
+            } else {
+                alert("It's just fun!");
+                location.reload();
+            }
+        }).catch((error) => {
+            console.error("Error checking user access:", error);
+        });
+    }
+
+    function startChat() {
         module.sendMsg = function sendMsg() {
             var msg = msgTxt.value;
             var timestamp = new Date().getTime();
@@ -125,7 +139,7 @@
                                 </div>
                               </div>`;
             messages.innerHTML += msgElement;
-            messages.scrollTop = messages.scrollHeight; // Auto-scroll to latest message
+            messages.scrollTop = messages.scrollHeight;
         });
 
         module.dltMsg = function dltMsg(key) {
@@ -136,6 +150,10 @@
             var msgBox = document.getElementById(data.key);
             if (msgBox) messages.removeChild(msgBox);
         });
-    </script>
+    }
+
+    checkUserAccess(sender);
+</script>
+
 </body>
 </html>
