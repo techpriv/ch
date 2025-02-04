@@ -138,7 +138,7 @@
                 <div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
                     <div id="inner" class="${isMe ? 'me' : 'notMe'}">
                         <span>${isMe ? 'You' : data.val().sender}: ${data.val().msg}</span>
-                        ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">DELETE</button>` : ""}
+                        ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">D</button>` : ""}
                     </div>
                 </div>`;
             messages.innerHTML += msgElement;
