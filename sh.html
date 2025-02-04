@@ -57,12 +57,7 @@
             width: 100%;
             margin-top: 10px;
             display: flex;
-        }
-        #inner {
-            padding: 10px;
-            border-radius: 10px;
-            max-width: 80%;
-            word-wrap: break-word;
+            justify-content: flex-start;
         }
         .me {
             background: #8800FF;
@@ -74,54 +69,61 @@
             color: #000;
             align-self: flex-start;
         }
+        #inner {
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <div id="messages"></div>
     <div id="sendMsg">
-        <input type="text" id="msgTxt" placeholder="Write ...">
+        <input type="text" id="msgTxt" placeholder="ENTER YOUR MSG...">
         <input type="submit" id="msgBtn" value="send" onclick="module.sendMsg()">
     </div>
 
     <script>
         module = {};
     </script>
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-    import { getDatabase, ref, set, get, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
-        authDomain: "chatapp-83001.firebaseapp.com",
-        projectId: "chatapp-83001",
-        storageBucket: "chatapp-83001.firebasestorage.app",
-        messagingSenderId: "988283174951",
-        appId: "1:988283174951:web:f4dba87388716ed17a4e02",
-    };
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+        const firebaseConfig = {
+          apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
+          authDomain: "chatapp-83001.firebaseapp.com",
+          projectId: "chatapp-83001",
+          storageBucket: "chatapp-83001.firebasestorage.app",
+          messagingSenderId: "988283174951",
+          appId: "1:988283174951:web:f4dba87388716ed17a4e02",
+        };
 
-    let sender = sessionStorage.getItem('sender') || prompt('PLEASE ENTER YOUR NAME');
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-    function checkUserAccess(username) {
-        const usersRef = ref(db, "allowedUsers/" + username);
-        get(usersRef).then((snapshot) => {
-            if (snapshot.exists()) {
-                sessionStorage.setItem('sender', username);
-                startChat();
-            } else {
-                alert("It's just fun!");
-                location.reload();
-            }
-        }).catch((error) => {
-            console.error("Error checking user access:", error);
-        });
-    }
+        var msgTxt = document.getElementById('msgTxt');
+        var sender = sessionStorage.getItem('sender') || prompt('PLEASE ENTER YOUR NAME');
+        sessionStorage.setItem('sender', sender);
 
-    function startChat() {
         module.sendMsg = function sendMsg() {
-            var msg = msgTxt.value;
+            var msg = msgTxt.value.trim();
+            if (msg === "") return;
+            
             var timestamp = new Date().getTime();
             set(ref(db, "messages/" + timestamp), {
                 msg: msg,
@@ -132,14 +134,15 @@
 
         onChildAdded(ref(db, "messages"), (data) => {
             let isMe = data.val().sender === sender;
-            let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
-                                <div id="inner" class="${isMe ? 'me' : 'notMe'}">
-                                    ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
-                                    ${isMe ? `<button onclick="module.dltMsg(${data.key})">DELETE</button>` : ""}
-                                </div>
-                              </div>`;
+            let msgElement = `
+                <div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
+                    <div id="inner" class="${isMe ? 'me' : 'notMe'}">
+                        <span>${isMe ? 'You' : data.val().sender}: ${data.val().msg}</span>
+                        ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">DELETE</button>` : ""}
+                    </div>
+                </div>`;
             messages.innerHTML += msgElement;
-            messages.scrollTop = messages.scrollHeight;
+            messages.scrollTop = messages.scrollHeight; // Auto-scroll to latest message
         });
 
         module.dltMsg = function dltMsg(key) {
@@ -150,10 +153,6 @@
             var msgBox = document.getElementById(data.key);
             if (msgBox) messages.removeChild(msgBox);
         });
-    }
-
-    checkUserAccess(sender);
-</script>
-
+    </script>
 </body>
 </html>
