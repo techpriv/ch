@@ -79,7 +79,7 @@
 <body>
     <div id="messages"></div>
     <div id="sendMsg">
-        <input type="text" id="msgTxt" placeholder="ENTER YOUR MSG...">
+        <input type="text" id="msgTxt" placeholder="Write ...">
         <input type="submit" id="msgBtn" value="send" onclick="module.sendMsg()">
     </div>
 
@@ -111,7 +111,7 @@
                 sessionStorage.setItem('sender', username);
                 startChat();
             } else {
-                alert("Access Denied! You are not an authorized user.");
+                alert("It's just fun!");
                 location.reload();
             }
         }).catch((error) => {
