@@ -82,9 +82,7 @@
             background: red;
             color: white;
             border: none;
-            padding: 5px 10px;
             cursor: pointer;
-            border-radius: 5px;
         }
     </style>
 </head>
@@ -147,7 +145,7 @@
             let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
                                 <div id="inner" class="${isMe ? 'me' : 'notMe'}">
                                     ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
-                                    ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">D</button>` : ""}
+                                    ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">🗑️</button>` : ""}
                                 </div>
                               </div>`;
             messages.innerHTML += msgElement;
