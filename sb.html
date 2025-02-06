@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            background: #000;
+            font-family: Arial, sans-serif;
+        }
+        #messages {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: calc(100% - 60px);
+            overflow-y: auto;
+            padding: 10px;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+        }
+        #sendMsg {
+            position: fixed;
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: #AAA;
+            display: flex;
+            align-items: center;
+            padding: 5px;
+        }
+        #msgTxt {
+            flex: 1;
+            height: 100%;
+            padding: 10px;
+            font-size: 16px;
+            border: none;
+            outline: none;
+        }
+        #msgBtn {
+            width: 100px;
+            height: 100%;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        .outer {
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            position: relative;
+        }
+        .me {
+            background: #8800FF;
+            color: #fff;
+            align-self: flex-end;
+        }
+        .notMe {
+            background: #FFF;
+            color: #000;
+            align-self: flex-start;
+        }
+        #inner {
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .delete-btn {
+            background: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .time {
+            font-size: 8px;
+            opacity: 0.7;
+            position: absolute;
+            top: 0;
+            padding: 2px;
+        }
+        .me .time {
+            right: 9px;
+        }
+        .notMe .time {
+            left: 9px;
+        }
+    </style>
+</head>
+<body>
+    <div id="messages"></div>
+    <div id="sendMsg">
+        <input type="text" id="msgTxt" placeholder="Write ...">
+        <input type="submit" id="msgBtn" value="send" onclick="module.sendMsg()">
+    </div>
+
+    <script>
+        module = {};
+    </script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getDatabase, ref, set, get, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
+        authDomain: "chatapp-83001.firebaseapp.com",
+        projectId: "chatapp-83001",
+        storageBucket: "chatapp-83001.firebasestorage.app",
+        messagingSenderId: "988283174951",
+        appId: "1:988283174951:web:f4dba87388716ed17a4e02",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let sender = sessionStorage.getItem('sender') || prompt('PLEASE ENTER YOUR NAME');
+
+    function checkUserAccess(username) {
+        const usersRef = ref(db, "allowedUsers/" + username);
+        get(usersRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                sessionStorage.setItem('sender', username);
+                startChat();
+            } else {
+                alert("It's just fun!");
+                location.reload();
+            }
+        }).catch((error) => {
+            console.error("Error checking user access:", error);
+        });
+    }
+
+    function startChat() {
+        module.sendMsg = function sendMsg() {
+            var msg = msgTxt.value;
+            var timestamp = new Date().getTime(); // Get current timestamp
+            var formattedTime = new Date(timestamp).toLocaleTimeString(); // Format time for display
+        
+            set(ref(db, "messages/" + timestamp), {
+                msg: msg,
+                sender: sender,
+                time: timestamp // Store raw timestamp in the database
+            });
+        
+            msgTxt.value = "";
+        };
+
+        function timeAgo(timestamp) {
+            const now = new Date().getTime();
+            const diff = now - timestamp; // Difference in milliseconds
+            const minutes = Math.floor(diff / 60000); // Minutes
+            const hours = Math.floor(diff / 3600000); // Hours
+            const days = Math.floor(diff / 86400000); // Days
+
+            if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+            if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            return 'Just now';
+        }
+
+        onChildAdded(ref(db, "messages"), (data) => {
+            let isMe = data.val().sender === sender;
+            let time = timeAgo(data.val().time); // Use timeAgo function to display relative time
+        
+            let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
+                                <div id="inner" class="${isMe ? 'notMe'}">
+                                    ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
+                                    <span class="time">${time}</span>
+                                    ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">🗑️</button>` : ""}
+                                </div>
+                              </div>`;
+        
+            messages.innerHTML += msgElement;
+            messages.scrollTop = messages.scrollHeight;
+        });
+
+        module.dltMsg = function dltMsg(key) {
+            remove(ref(db, "messages/" + key));
+        };
+
+        onChildRemoved(ref(db, "messages"), (data) => {
+            var msgBox = document.getElementById(data.key);
+            if (msgBox) messages.removeChild(msgBox);
+        });
+    }
+
+    checkUserAccess(sender);
+</script>
+
+</body>
+</html>
