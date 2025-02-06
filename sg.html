@@ -86,17 +86,17 @@
             cursor: pointer;
         }
         .time {
-            font-size: 8px;
+            font-size: 12px;
             opacity: 0.7;
             position: absolute;
             top: 0;
-            padding: 2px;
+            padding: 5px;
         }
         .me .time {
-            right: 9px;
+            right: 0;
         }
         .notMe .time {
-            left: 9px;
+            left: 0;
         }
     </style>
 </head>
@@ -162,13 +162,13 @@
             let isMe = data.val().sender === sender;
             let time = data.val().time || "Unknown time"; // Get stored time or fallback text
         
-            let msgElement = <div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
+            let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
                                 <div id="inner" class="${isMe ? 'me' : 'notMe'}">
                                     ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
                                     <span class="time">${time}</span>
-                                    ${isMe ? <button class="delete-btn" onclick="module.dltMsg(${data.key})">🗑️</button> : ""}
+                                    ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">🗑️</button>` : ""}
                                 </div>
-                              </div>;
+                              </div>`;
         
             messages.innerHTML += msgElement;
             messages.scrollTop = messages.scrollHeight;
