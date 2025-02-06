@@ -57,6 +57,7 @@
             width: 100%;
             margin-top: 10px;
             display: flex;
+            position: relative;
         }
         .me {
             background: #8800FF;
@@ -83,6 +84,19 @@
             color: white;
             border: none;
             cursor: pointer;
+        }
+        .time {
+            font-size: 8px;
+            opacity: 0.7;
+            position: absolute;
+            top: 0;
+            padding: 2px;
+        }
+        .me .time {
+            right: 9px;
+        }
+        .notMe .time {
+            left: 9px;
         }
     </style>
 </head>
@@ -132,22 +146,43 @@
     function startChat() {
         module.sendMsg = function sendMsg() {
             var msg = msgTxt.value;
-            var timestamp = new Date().getTime();
+            var timestamp = new Date().getTime(); // Get current timestamp
+            var formattedTime = new Date(timestamp).toLocaleTimeString(); // Format time for display
+        
             set(ref(db, "messages/" + timestamp), {
                 msg: msg,
-                sender: sender
+                sender: sender,
+                time: timestamp // Store raw timestamp in the database
             });
+        
             msgTxt.value = "";
         };
 
+        function timeAgo(timestamp) {
+            const now = new Date().getTime();
+            const diff = now - timestamp; // Difference in milliseconds
+            const minutes = Math.floor(diff / 60000); // Minutes
+            const hours = Math.floor(diff / 3600000); // Hours
+            const days = Math.floor(diff / 86400000); // Days
+
+            if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+            if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            return 'Just now';
+        }
+
         onChildAdded(ref(db, "messages"), (data) => {
             let isMe = data.val().sender === sender;
+            let time = timeAgo(data.val().time); // Use timeAgo function to display relative time
+        
             let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
                                 <div id="inner" class="${isMe ? 'me' : 'notMe'}">
                                     ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
+                                    <span class="time">${time}</span>
                                     ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">🗑️</button>` : ""}
                                 </div>
                               </div>`;
+        
             messages.innerHTML += msgElement;
             messages.scrollTop = messages.scrollHeight;
         });
