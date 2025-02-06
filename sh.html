@@ -96,11 +96,9 @@
     <script>
         module = {};
     </script>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-    import { getDatabase, ref, set, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, remove, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyDohkyAJIUHop4d7eqbdbmVDUidHtzlAhI",
@@ -113,44 +111,51 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const auth = getAuth();
 
-    // Authenticate user anonymously
-    signInAnonymously(auth)
-        .then(() => console.log("User signed in anonymously"))
-        .catch((error) => console.error("Auth error:", error));
+    let sender = sessionStorage.getItem('sender') || prompt('PLEASE ENTER YOUR NAME');
 
-    // Track authentication state
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            let sender = user.uid;  // Use UID instead of prompt-based username
-            startChat(sender);
-        } else {
-            console.error("User not authenticated.");
-        }
-    });
+    function checkUserAccess(username) {
+        const usersRef = ref(db, "allowedUsers/" + username);
+        get(usersRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                sessionStorage.setItem('sender', username);
+                startChat();
+            } else {
+                alert("It's just fun!");
+                location.reload();
+            }
+        }).catch((error) => {
+            console.error("Error checking user access:", error);
+        });
+    }
 
-    function startChat(sender) {
+    function startChat() {
         module.sendMsg = function sendMsg() {
-            var msg = msgTxt.value.trim();
-            if (!msg) return;
-
-            var timestamp = new Date().getTime();
+            var msg = msgTxt.value;
+            var timestamp = new Date().getTime(); // Get current timestamp
+            var formattedTime = new Date(timestamp).toLocaleTimeString(); // Format time for display
+        
             set(ref(db, "messages/" + timestamp), {
                 msg: msg,
-                sender: sender
+                sender: sender,
+                time: formattedTime // Store formatted time in the database
             });
+        
             msgTxt.value = "";
         };
 
         onChildAdded(ref(db, "messages"), (data) => {
             let isMe = data.val().sender === sender;
+            let time = data.val().time || "Unknown time"; // Get stored time or fallback text
+        
             let msgElement = `<div class="outer" id="${data.key}" style="${isMe ? 'justify-content:end' : ''}">
                                 <div id="inner" class="${isMe ? 'me' : 'notMe'}">
-                                    ${isMe ? 'You' : 'User'}: ${data.val().msg}
+                                    ${isMe ? 'You' : data.val().sender} : ${data.val().msg}
+                                    <span style="font-size: 12px; opacity: 0.7; margin-left: 10px;">${time}</span>
                                     ${isMe ? `<button class="delete-btn" onclick="module.dltMsg(${data.key})">🗑️</button>` : ""}
                                 </div>
                               </div>`;
+        
             messages.innerHTML += msgElement;
             messages.scrollTop = messages.scrollHeight;
         });
@@ -164,6 +169,8 @@
             if (msgBox) messages.removeChild(msgBox);
         });
     }
+
+    checkUserAccess(sender);
 </script>
 
 </body>
